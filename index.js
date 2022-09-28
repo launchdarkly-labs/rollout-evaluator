@@ -11,11 +11,12 @@ function showMessage(s) {
 // Set sdkKey & the client initialisation options
 const sdkKey = process.env.SDK_KEY;
 const initOptions = {
-  logger: LaunchDarkly.basicLogger({ level: 'debug' })
+  logger: LaunchDarkly.basicLogger({ level: 'debug' }),
+  sendEvents: false
 };
 
 // Set featureFlagKey to the feature flag key you want to evaluate.
-const featureFlagKey = "percentage-rollout-flag-1";
+const featureFlagKey = "percentage-rollout-flag";
 
 // Initialise the LD client
 const ldClient = LaunchDarkly.init(sdkKey, initOptions);
@@ -34,9 +35,9 @@ ldClient.waitForInitialization().then(function () {
       let trueVar = 0;
       let falseVar = 0;
 
-      slicedResults = results.slice(0,10);
+      // slicedResults = results.slice(0,10);
 
-      slicedResults.forEach((result) => {
+      results.forEach((result) => {
         const user = {
           "key": result.email,
           "custom": {
@@ -66,12 +67,14 @@ ldClient.waitForInitialization().then(function () {
         console.log("FINISHED evaluating the users");
         console.log(`Served TRUE variation: ${trueVar} user keys`);
         console.log(`Served FALSE variation: ${falseVar} user keys`);
+
+        // Flush queued events & close the LD client
+        ldClient.flush(function () {
+          ldClient.close();
+        });
       }, 500);
     });
-  // Flush queued events & close the LD client
-  ldClient.flush(function () {
-    ldClient.close();
-  });
+
 }).catch(function (error) {
   showMessage("SDK failed to initialize: " + error);
   process.exit(1);
