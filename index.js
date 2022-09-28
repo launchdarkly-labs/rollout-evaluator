@@ -1,45 +1,78 @@
-var LaunchDarkly = require('launchdarkly-node-server-sdk');
-
-// Set sdkKey to your LaunchDarkly SDK key.
-const sdkKey = "";
-
-// Set featureFlagKey to the feature flag key you want to evaluate.
-const featureFlagKey = "my-boolean-flag";
+const LaunchDarkly = require('launchdarkly-node-server-sdk');
+const csv = require('csv-parser')
+const fs = require('fs')
+require('dotenv').config();
 
 function showMessage(s) {
   console.log("*** " + s);
   console.log("");
 }
 
-if (sdkKey == "") {
-  showMessage("Please edit index.js to set sdkKey to your LaunchDarkly SDK key first");
-  process.exit(1);
-}
-
-const ldClient = LaunchDarkly.init(sdkKey);
-
-// Set up the user properties. This user should appear on your LaunchDarkly users dashboard
-// soon after you run the demo.
-const user = {
-   "key": "example-user-key",
-   "name": "Sandy"
+// Set sdkKey & the client initialisation options
+const sdkKey = process.env.SDK_KEY;
+const initOptions = {
+  logger: LaunchDarkly.basicLogger({ level: 'debug' })
 };
 
-ldClient.waitForInitialization().then(function() {
-  showMessage("SDK successfully initialized!");
-  ldClient.variation(featureFlagKey, user, false, function(err, flagValue) {
-    showMessage("Feature flag '" + featureFlagKey + "' is " + flagValue + " for this user");
+// Set featureFlagKey to the feature flag key you want to evaluate.
+const featureFlagKey = "percentage-rollout-flag-1";
 
-    // Here we ensure that the SDK shuts down cleanly and has a chance to deliver analytics
-    // events to LaunchDarkly before the program exits. If analytics events are not delivered,
-    // the user properties and flag usage statistics will not appear on your dashboard. In a
-    // normal long-running application, the SDK would continue running and events would be
-    // delivered automatically in the background.
-    ldClient.flush(function() {
-      ldClient.close();
+// Initialise the LD client
+const ldClient = LaunchDarkly.init(sdkKey, initOptions);
+
+ldClient.waitForInitialization().then(function () {
+  showMessage("SDK successfully initialized!");
+
+  // Reading the content of a CSV file
+  const results = [];
+  fs.createReadStream('assets/user-emails.csv')
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', () => {
+      // Using the parsed CSV to generate user keys and evaluate them for a feature rollout
+      console.log("STARTED evaluating the users");
+      let trueVar = 0;
+      let falseVar = 0;
+
+      slicedResults = results.slice(0,10);
+
+      slicedResults.forEach((result) => {
+        const user = {
+          "key": result.email,
+          "custom": {
+            "pre-bucket": true
+          }
+        };
+
+        ldClient.variation(featureFlagKey, user, false, (err, flagValue) => {
+          if (flagValue === true) {
+            trueVar++;
+          } else if (flagValue === false) {
+            falseVar++;
+          } else {
+            console.log(err);
+          }
+          return trueVar, falseVar;
+        });
+      });
+      // 1) Add logic to count the number of users for each flag variation -> DONE
+      // 2) Export this into a new CSV 
+      /* 3) Create UI: 
+               - Able to upload CSV
+               - Able to add SDK key
+               - Download output
+      */
+      setTimeout(() => {
+        console.log("FINISHED evaluating the users");
+        console.log(`Served TRUE variation: ${trueVar} user keys`);
+        console.log(`Served FALSE variation: ${falseVar} user keys`);
+      }, 500);
     });
+  // Flush queued events & close the LD client
+  ldClient.flush(function () {
+    ldClient.close();
   });
-}).catch(function(error) {
+}).catch(function (error) {
   showMessage("SDK failed to initialize: " + error);
   process.exit(1);
 });

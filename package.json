@@ -4,6 +4,8 @@
   "description": "Hello LaunchDarkly for Node.js",
   "main": "index.js",
   "dependencies": {
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.0.2",
     "launchdarkly-node-server-sdk": ">= 5.8.1"
   }
 }
