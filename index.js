@@ -35,27 +35,40 @@ ldClient.waitForInitialization().then(function () {
       let trueVar = 0;
       let falseVar = 0;
 
-      // slicedResults = results.slice(0,10);
+      // slicedResults = results.slice(0,50);
 
-      results.forEach((result) => {
-        const user = {
-          "key": result.email,
-          "custom": {
-            "pre-bucket": true
-          }
-        };
+      async function bucketUsers () {
+        await Promise.all(results.map(async (result) => {
+          const user = {
+            "key": result.email,
+            "custom": {
+              "pre-bucket": true
+            }
+          };
 
-        ldClient.variation(featureFlagKey, user, false, (err, flagValue) => {
-          if (flagValue === true) {
-            trueVar++;
-          } else if (flagValue === false) {
-            falseVar++;
-          } else {
-            console.log(err);
-          }
-          return trueVar, falseVar;
+          ldClient.variation(featureFlagKey, user, false).then((flagValue) => {
+            if (flagValue === true) {
+              trueVar++;
+            } else if (flagValue === false) {
+              falseVar++;
+            } else {
+              console.log(err);
+            }
+          }).catch((err) => console.log(err));
+        }))
+      }
+
+      bucketUsers().then(() => {
+        console.log("USING PROMISE.ALL and THEN");
+        console.log(`Served TRUE variation: ${trueVar} user keys`);
+        console.log(`Served FALSE variation: ${falseVar} user keys`);
+
+        ldClient.flush(function () {
+          ldClient.close();
         });
       });
+
+      // TODO
       // 1) Add logic to count the number of users for each flag variation -> DONE
       // 2) Export this into a new CSV 
       /* 3) Create UI: 
@@ -63,16 +76,6 @@ ldClient.waitForInitialization().then(function () {
                - Able to add SDK key
                - Download output
       */
-      setTimeout(() => {
-        console.log("FINISHED evaluating the users");
-        console.log(`Served TRUE variation: ${trueVar} user keys`);
-        console.log(`Served FALSE variation: ${falseVar} user keys`);
-
-        // Flush queued events & close the LD client
-        ldClient.flush(function () {
-          ldClient.close();
-        });
-      }, 500);
     });
 
 }).catch(function (error) {
