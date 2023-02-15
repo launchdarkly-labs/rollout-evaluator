@@ -38,13 +38,13 @@ ldClient.waitForInitialization().then(function () {
       let falseVar = 0;
 
       slicedUsers = users.slice(0,20);
-      console.log(slicedUsers);
       async function bucketUsers () {
-        await Promise.all(slicedUsers.map(async (user) => {
+        await Promise.all(users.map(async (user) => {
           
           // Split the user email by "-" or "@" characters and take the second item in the resulting array (should be a number)
           // User email format: test-[N]@email.com
           const userNumber = parseInt(user.key.split(/[@,-]+/)[1]);
+          const roundedNumber = Math.ceil(userNumber / 10);
           const determineParity = (number) => {
             let parity
             if (number % 2 == 0) {
@@ -54,12 +54,15 @@ ldClient.waitForInitialization().then(function () {
             }
             return parity
           }
-          
+          user["parity"] = determineParity(userNumber);
+          user["number"] = roundedNumber;
+
           const userContext = {
             "key": user.key,
             "custom": {
               "pre-bucket": true,
-              "parity": determineParity(userNumber)
+              "parity": determineParity(userNumber),
+              "user-number": roundedNumber
             }
           };
 
@@ -91,11 +94,11 @@ ldClient.waitForInitialization().then(function () {
         });
 
         // Parse final JSON to a CSV
-        const fields = ['key', featureFlagKey];
+        const fields = ['key', 'parity', "number", featureFlagKey];
         const opts = { fields };
 
-        parseAsync(slicedUsers, opts)
-          .then(csv => fs.writeFileSync("output/export.csv", csv))
+        parseAsync(users, opts)
+          .then(csv => fs.writeFileSync("output/export-3.csv", csv))
           .catch(err => console.error(err));
       });
 
