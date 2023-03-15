@@ -7,6 +7,9 @@
     "csv-parser": "^3.0.0",
     "dotenv": "^16.0.2",
     "json2csv": "^5.0.7",
-    "launchdarkly-node-server-sdk": ">= 5.8.1"
+    "launchdarkly-node-server-sdk": "^7.0.1"
+  },
+  "scripts": {
+    "evaluate": "node index.js"
   }
 }
