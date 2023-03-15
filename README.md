@@ -24,4 +24,5 @@ The script accepts a CSV file with a single column called `key`. The output is a
 
 * Add the ability to specify flag key via an argument when executing the script.
 * Add support for evaluating multiple/all flags in a given environment.
+* Add support for multivariate flags.
 * Add suport for taking context attributes into consideration when running the evaluation logic.
