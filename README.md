@@ -1,6 +1,6 @@
 ## LaunchDarkly Rollout Evaluator
 
-Simple NodeJS script which evaluates the context keys provided via a CSV file and outputs a file that shows what flag variation would be served to each context key. The original use case for which it was created were percentage rollouts without any additional targeting in place.
+Simple NodeJS script which evaluates the context keys provided via a CSV file and outputs a file that shows what flag variation would be served to each context key. In its current form, the scrit supports the use of boolean-type flags without any additional attribute-based targeting.
 
 The script accepts a CSV file with a single column called `key`. The output is a CSV with two columns: one with context keys and the second with header matching the provided flag key and values matching the assigned variations for the particular % rollout.
 
