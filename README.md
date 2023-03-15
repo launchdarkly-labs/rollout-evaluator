@@ -4,6 +4,10 @@ Simple NodeJS script which evaluates the context keys provided via a CSV file an
 
 The script accepts a CSV file with a single column called `key`. The output is a CSV with two columns: one with context keys and the second with header matching the provided flag key and values matching the assigned variations for the particular % rollout.
 
+**Disclaimer:** 
+
+This script is provided as-is and is not officially supported by LaunchDarkly customer-facing teams.
+
 **Instructions for use:**
 
 1. Clone the repository, enter the folder, and run `npm install`.
