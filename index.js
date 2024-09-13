@@ -1,4 +1,4 @@
-const LaunchDarkly = require('launchdarkly-node-server-sdk');
+const LaunchDarkly = require('@launchdarkly/node-server-sdk');
 const csv = require('csv-parser')
 const fs = require('fs')
 const { parseAsync } = require('json2csv');
@@ -42,27 +42,27 @@ ldClient.waitForInitialization().then(function () {
       // slicedUsers = users.slice(0,20);
 
       async function bucketUsers () {
-        await Promise.all(users.map(async (user) => {
-          
+        for (const user of users) {
           const evaluationContext = {
             kind: 'user',
             key: user.key
             // Optionally, you can provide additional attributes/values in here
           };
 
-          ldClient.variation(featureFlagKey, evaluationContext, false).then((flagValue) => {
+          try {
+            const flagValue = await ldClient.variation(featureFlagKey, evaluationContext, false);
             if (flagValue === true) {
               trueVar++;
             } else if (flagValue === false) {
               falseVar++;
             } else {
-              console.log(err);
+              console.log('Unexpected flag value:', flagValue);
             }
             user[featureFlagKey] = flagValue;
-
-            return user;
-          }).catch((err) => console.log(err));
-        }))
+          } catch (err) {
+            console.log('Error evaluating flag:', err);
+          }
+        }
       }
 
       bucketUsers().then(() => {
